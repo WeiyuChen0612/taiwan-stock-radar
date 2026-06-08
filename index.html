@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股三大法人板塊抄底追蹤</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        #main-chart { width: 100%; height: 550px; background: #161b22; border-radius: 8px; padding: 10px; }
+        h1 { color: #58a6ff; font-size: 24px; }
+        .note { color: #8b949e; font-size: 14px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 台股板塊輪動 & 法人抄底觀察儀表板</h1>
+        <div class="note">※ 右上象限（綠色）：法人加速湧入噴發區 | 左下象限（紅色）：法人加速撤離減碼區</div>
+        
+        <div id="main-chart"></div>
+    </div>
+
+    <script>
+        var chartDom = document.getElementById('main-chart');
+        var myChart = echarts.init(chartDom, 'dark');
+
+        // 讀取剛剛 Python 算好的 json 檔案
+        fetch('data.json')
+            .then(response => response.json())
+            .then(jsonData => {
+                var option = {
+                    backgroundColor: '#161b22',
+                    grid: { left: '8%', right: '10%', top: '10%', bottom: '10%' },
+                    xAxis: { name: '法人淨買超 (億元)', splitLine: { lineStyle: { type: 'dashed', color: '#30363d' } } },
+                    yAxis: { name: '流入加速度 (力道)', splitLine: { lineStyle: { type: 'dashed', color: '#30363d' } } },
+                    series: [{
+                        type: 'scatter',
+                        symbolSize: function (data) { return data[2]; }, // 控制氣泡大小
+                        data: jsonData,
+                        label: {
+                            show: true,
+                            formatter: function (param) { return param.data[3]; }, // 顯示板塊名稱
+                            position: 'inside',
+                            color: '#fff',
+                            fontWeight: 'bold'
+                        },
+                        itemStyle: {
+                            color: function (param) {
+                                // X軸大於0 (買超) 顯示綠色，小於0 (賣超) 顯示紅色
+                                return param.data[0] > 0 ? '#238636' : '#da3637';
+                            }
+                        }
+                    }]
+                };
+                myChart.setOption(option);
+            })
+            .catch(err => {
+                console.log("尚未有今日資料，先顯示模擬資料");
+                // 這裡可以放一份防呆的預設資料，避免畫面空白
+            });
+    </script>
+</body>
+</html>
